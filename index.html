@@ -157,7 +157,27 @@ svg.heart .r2{fill:none;stroke:var(--sky-d);stroke-width:1;stroke-dasharray:1 7;
     <svg class="heart" id="hs2" viewBox="0 0 100 100" aria-hidden="true" style="width:clamp(90px,26vw,150px);margin-bottom:26px"><path class="st" id="hp2" d="M50 88C12 58 4 34 18 20C30 8 46 14 50 28C54 14 70 8 82 20C96 34 88 58 50 88Z"/></svg>
     <h2 class="ask" id="ys" style="font-size:clamp(1.9rem,8vw,3.6rem)"></h2>
     <p class="kiss" id="kiss" aria-live="polite"></p>
-    <button class="mini" id="back" type="button">Change my answer</button>
+  </section>
+
+  <section class="scene" id="ringS">
+    <svg id="fl" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none"></svg>
+    <p class="msg" id="rt" style="position:relative;z-index:1;font-size:clamp(1.5rem,6.4vw,2.8rem);margin-bottom:18px"></p>
+    <svg id="hand" viewBox="0 0 200 250" style="position:relative;z-index:1;width:clamp(170px,42vw,250px);height:auto;overflow:visible" aria-hidden="true">
+      <defs><linearGradient id="sk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dcc4"/><stop offset="1" stop-color="#e8b998"/></linearGradient></defs>
+      <g fill="url(#sk)" stroke="rgba(47,58,27,.3)" stroke-width="1.2">
+        <rect x="38" y="62" width="26" height="100" rx="13"/>
+        <rect x="66" y="32" width="26" height="130" rx="13"/>
+        <rect x="94" y="18" width="26" height="144" rx="13"/>
+        <rect x="122" y="34" width="26" height="128" rx="13"/>
+        <rect x="150" y="150" width="26" height="86" rx="13" transform="rotate(-38 160 170)"/>
+        <rect x="36" y="120" width="116" height="118" rx="44"/>
+      </g>
+      <g id="ringg" style="transform-box:fill-box;transform-origin:center;opacity:0">
+        <ellipse cx="79" cy="112" rx="14" ry="5.5" fill="none" stroke="#d9b24c" stroke-width="4"/>
+        <polygon points="79,92 87,100 79,108 71,100" fill="#eaf4fb" stroke="#6fa3cb" stroke-width="1.2"/>
+      </g>
+    </svg>
+    <button class="mini" id="back" type="button" style="position:relative;z-index:1">Change my answer</button>
   </section>
 
   <div id="gate">
@@ -257,7 +277,7 @@ function boost(){
       const AC=window.AudioContext||window.webkitAudioContext;actx=new AC();
       const lim=actx.createDynamicsCompressor();lim.threshold.value=-8;lim.knee.value=12;lim.ratio.value=10;lim.attack.value=.003;lim.release.value=.2;
       const g=actx.createGain();g.gain.value=BOOST;g.connect(lim);lim.connect(actx.destination);
-      [song,nopeSong].forEach(a=>actx.createMediaElementSource(a).connect(g));
+      [song,nopeSong,yesSong].forEach(a=>actx.createMediaElementSource(a).connect(g));
     }
     if(actx.state==='suspended')actx.resume();
   }catch(e){console.warn('volume boost unavailable',e);}
@@ -266,7 +286,7 @@ function fadeSong(v,ms){clearInterval(vt);const a=song.volume,t0=performance.now
 const EVS=['click','touchend','pointerup'];
 function startSong(){
   if(songOn)return;boost();
-  const ok=()=>{if(songOn)return;songOn=true;if(nopeOn){song.pause();}else fadeSong(LEVEL,3500);EVS.forEach(e=>removeEventListener(e,startSong,true));};
+  const ok=()=>{if(songOn)return;songOn=true;if(nopeOn||yesOn){song.pause();}else fadeSong(LEVEL,3500);EVS.forEach(e=>removeEventListener(e,startSong,true));};
   try{const p=song.play();if(p&&p.then)p.then(ok).catch(()=>{});else ok();}catch(e){}
 }
 EVS.forEach(e=>addEventListener(e,startSong,true));
@@ -274,7 +294,23 @@ EVS.forEach(e=>addEventListener(e,startSong,true));
 const NOPE_SRC='ssstik.io_1793527082095.mp3';
 let nopeSong=new Audio(NOPE_SRC);nopeSong.preload='auto';
 let nopeOn=false;
-function resumeMain(){if(!songOn)return;song.volume=0;song.play().then(()=>fadeSong(LEVEL,1800)).catch(()=>{});}
+/* Yes song: plays when she taps Yes (main + nope songs stop) */
+const YES_SRC='ssstik.io_1793528600492.mp3';
+let yesOn=false;
+const yesSong=new Audio(YES_SRC);yesSong.loop=true;yesSong.preload='auto';
+function playYes(){
+  boost();clearInterval(vt);song.pause();
+  yesSong.currentTime=0;yesSong.volume=1;
+  const p=yesSong.play();if(p&&p.catch)p.catch(e=>{
+    console.warn('yes song retry',e);
+    const a=new Audio(YES_SRC);a.loop=true;a.volume=1;a.play().then(()=>{yesSong.pause();window._yesAlt=a;}).catch(()=>{});
+  });
+}
+function stopYes(){
+  yesOn=false;yesSong.pause();yesSong.currentTime=0;
+  if(window._yesAlt){window._yesAlt.pause();window._yesAlt=null;}
+}
+function resumeMain(){if(!songOn||yesOn)return;song.volume=0;song.play().then(()=>fadeSong(LEVEL,1800)).catch(()=>{});}
 function playNope(){
   if(nopeOn)return;boost();
   nopeSong.currentTime=0;nopeSong.volume=1;
@@ -288,7 +324,8 @@ function playNope(){
 function stopNope(){if(!nopeOn)return;nopeOn=false;nopeSong.pause();nopeSong.currentTime=0;resumeMain();}
 nopeSong.addEventListener('ended',()=>{nopeOn=false;resumeMain();});
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){song.pause();nopeSong.pause();}
+  if(document.hidden){song.pause();nopeSong.pause();yesSong.pause();}
+  else if(yesOn)yesSong.play().catch(()=>{});
   else if(nopeOn)nopeSong.play().catch(()=>{});
   else if(songOn)song.play().catch(()=>{});
 });
@@ -462,6 +499,67 @@ async function run(){
   $('#btns').style.opacity=1;
 }
 
+/* ---------- Real flowers ---------- */
+function flower(svg,x,base,h,r,col,delay){
+  const g=document.createElementNS(NS,'g');svg.appendChild(g);
+  const bend=rnd(-28,28);
+  const st=document.createElementNS(NS,'path');
+  st.setAttribute('d',`M${x} ${base}C${x+bend} ${base-h*.4} ${x-bend} ${base-h*.7} ${x} ${base-h}`);
+  st.setAttribute('class','stem');st.style.strokeWidth='3';g.appendChild(st);
+  const len=st.getTotalLength();st.style.strokeDasharray=len;st.style.strokeDashoffset=len;
+  an(st,[{strokeDashoffset:len},{strokeDashoffset:0}],2400,{delay,e:'cubic-bezier(.4,0,.2,1)'});
+  for(let i=0;i<3;i++){
+    const f=.25+i*.22,p=st.getPointAtLength(len*f),side=i%2?1:-1;
+    const w=document.createElementNS(NS,'g');w.setAttribute('transform',`translate(${p.x} ${p.y}) rotate(${side*50-90}) scale(.9)`);
+    const lf=document.createElementNS(NS,'path');lf.setAttribute('d','M0 0C5 -10 22 -11 32 0C22 11 5 10 0 0Z');lf.setAttribute('class','leaf'+(i%2?' ll':''));
+    lf.style.transformOrigin='0 0';w.appendChild(lf);g.appendChild(w);
+    an(lf,[{transform:'scale(0)'},{transform:'scale(1)'}],1000,{delay:delay+2400*f});
+  }
+  const top=st.getPointAtLength(len);
+  const b=document.createElementNS(NS,'g');b.setAttribute('transform',`translate(${top.x} ${top.y})`);g.appendChild(b);
+  [[1,0,col],[.68,22,'#ffffff']].forEach(([k,off,c],layer)=>{
+    const n=9;
+    for(let i=0;i<n;i++){
+      const pw=document.createElementNS(NS,'g');pw.setAttribute('transform',`rotate(${i*360/n+off})`);
+      const pe=document.createElementNS(NS,'ellipse');
+      pe.setAttribute('cx',0);pe.setAttribute('cy',-r*k*.62);pe.setAttribute('rx',r*k*.3);pe.setAttribute('ry',r*k*.64);
+      pe.setAttribute('fill',c);pe.setAttribute('stroke','rgba(47,58,27,.12)');pe.setAttribute('stroke-width',.8);
+      pe.style.transformOrigin='0 0';pw.appendChild(pe);b.appendChild(pw);
+      an(pe,[{transform:'scale(0)',opacity:0},{transform:'scale(1)',opacity:.96}],1500,{delay:delay+2300+layer*500+i*90});
+    }
+  });
+  const ct=document.createElementNS(NS,'circle');ct.setAttribute('r',r*.2);ct.setAttribute('fill','#e8b84a');ct.style.transformOrigin='0 0';b.appendChild(ct);
+  an(ct,[{transform:'scale(0)'},{transform:'scale(1)'}],900,{delay:delay+3400});
+  if(!RM){g.style.transformOrigin=`${x}px ${base}px`;g.animate([{transform:'rotate(-1.6deg)'},{transform:'rotate(1.6deg)'}],{duration:4200+Math.random()*2000,delay:T(delay+4500),direction:'alternate',iterations:Infinity,easing:'ease-in-out'});}
+}
+
+/* ---------- Ring + flowers scene ---------- */
+async function ringScene(){
+  const ys=$('#yesS'),rs=$('#ringS'),fl=$('#fl'),hand=$('#hand'),ring=$('#ringg'),rt=$('#rt'),bk=$('#back');
+  await an(ys,[{opacity:1},{opacity:0}],1200,{e:'ease-in'});ys.classList.remove('on');clearAn(ys);
+  [hand,ring,rt,bk].forEach(clearAn);ring.style.opacity=0;bk.style.opacity=0;rt.textContent='';
+  await show(rs);
+  fl.textContent='';fl.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const cols=['#f4a8b8','#f7c6d0','#a8cbe6','#ffd98a','#f4a8b8','#c9b8e8'];
+  const n=Math.max(5,Math.round(W/95));
+  for(let i=0;i<n;i++){
+    const x=(i+.5)*W/n+rnd(-18,18);
+    flower(fl,x,H+10,rnd(H*.22,H*.5),Math.max(24,Math.min(44,W/16)),cols[i%cols.length],rnd(0,1800));
+  }
+  an(hand,[{opacity:0,transform:'translateY(50px)'},{opacity:1,transform:'none'}],1600);
+  await sleep(1800);
+  ring.style.opacity=1;
+  await an(ring,[{transform:'translateY(-110px) scale(1.7)',opacity:0},{transform:'translateY(0) scale(1)',opacity:1}],1800);
+  const r=ring.getBoundingClientRect();sparkle(r.left+r.width/2,r.top+r.height/2,18,40);
+  setTimeout(()=>sparkle(r.left+r.width/2,r.top,12,50),500);
+  rain();
+  const b=build(rt,'Pakhi, tmk amar kore nilam,\nforever. 💍',{cs:55,gap:160,lb:500});
+  rt.animate([{filter:'drop-shadow(0 0 28px rgba(168,203,230,1))'},{filter:'drop-shadow(0 0 6px rgba(168,203,230,.2))'}],{duration:T(3200),fill:'both'});
+  await reveal(b,1300);wave(b);
+  await an(bk,[{opacity:0},{opacity:1}],1600,{delay:2500});
+  yes.disabled=false;
+}
+
 /* ---------- Interactions ---------- */
 let noCount=0;
 const NOPE=['Hehe… are you sure? 🥺','Pakhiiii, think again. My heart is listening 💗','That button looks shy. The other one looks very cute 👀','Error: “No” could not be found. Try the other one 🙈','Okay okay, I’ll wait. Forever. 😌','Still here, still hoping ❤️'];
@@ -476,7 +574,8 @@ no.onclick=()=>{
   an(hint,[{opacity:0,transform:`translate(${side*18}px,10px)`,filter:'blur(6px)'},{opacity:1,transform:'none',filter:'blur(0)'}],900);
 };
 yes.onclick=async()=>{
-  yes.disabled=true;logAnswer('yes',noCount);burst();stopNope();fadeSong(1,1500);setTimeout(()=>fadeSong(LEVEL,6000),4000);
+  yes.disabled=true;logAnswer('yes',noCount);burst();
+  yesOn=true;nopeOn=false;nopeSong.pause();nopeSong.currentTime=0;playYes();
   an($('#tint'),[{opacity:.55},{opacity:.2}],2500);
   const as=$('#askS'),ys=$('#yesS');
   await an(as,[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(1.06)'}],900,{e:'ease-in'});
@@ -494,14 +593,17 @@ yes.onclick=async()=>{
   k.animate([{filter:'drop-shadow(0 0 28px rgba(168,203,230,1))'},{filter:'drop-shadow(0 0 6px rgba(168,203,230,.2))'}],{duration:T(3200),fill:'both'});
   await reveal(kb,1300);wave(kb);
   t.animate([{filter:'drop-shadow(0 0 30px rgba(168,203,230,1))'},{filter:'drop-shadow(0 0 8px rgba(168,203,230,.2))'}],{duration:T(3000),fill:'both'});
-  await an($('#back'),[{opacity:0},{opacity:1}],1600,{delay:2500});
-  yes.disabled=false;
+  await sleep(3200);
+  await ringScene();
 };
 $('#back').onclick=async()=>{
-  const ys=$('#yesS'),as=$('#askS');
-  await an(ys,[{opacity:1},{opacity:0}],700,{e:'ease-in'});
-  ys.classList.remove('on');clearAn(ys);clearAn($('#back'));{const k=$('#kiss');clearAn(k);k.textContent='';}$('#back').style.opacity=0;clearAn($('#hs2'));
-  hint.style.opacity=0;noCount=0;no.style.setProperty('--g',1);yes.style.setProperty('--g',1);
+  const rs=$('#ringS'),as=$('#askS');
+  stopYes();resumeMain();
+  await an(rs,[{opacity:1},{opacity:0}],700,{e:'ease-in'});
+  rs.classList.remove('on');clearAn(rs);clearAn($('#back'));$('#back').style.opacity=0;
+  $('#fl').textContent='';$('#rt').textContent='';
+  {const k=$('#kiss');clearAn(k);k.textContent='';}clearAn($('#hs2'));
+  hint.style.opacity=0;noCount=0;no.style.setProperty('--g',1);yes.style.setProperty('--g',1);yes.disabled=false;
   an($('#tint'),[{opacity:.2},{opacity:.55}],1500);
   await show(as);
 };
