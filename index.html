@@ -76,6 +76,10 @@ svg.heart .r2{fill:none;stroke:var(--sky-d);stroke-width:1;stroke-dasharray:1 7;
 .chip[aria-checked=true]{background:var(--olive);color:#f9f6ec;border-color:var(--olive);box-shadow:0 0 0 5px rgba(168,203,230,.5)}
 .chip:focus-visible{outline:2px solid var(--sky-d);outline-offset:3px}
 #begin:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.wish1{font-size:clamp(3.6rem,18vw,7.6rem);font-style:italic;font-weight:500;line-height:1.05;color:var(--olive)}
+.wish2{font-size:clamp(1.7rem,7vw,3.2rem);font-style:italic;font-weight:400;line-height:1.5;color:var(--olive-d);margin-top:.2em}
+#wl{width:clamp(130px,40vw,230px);height:auto;margin:6px 0 10px;overflow:visible}
+#wl path{fill:none;stroke:var(--sky-d);stroke-width:2.2;stroke-linecap:round}
 .kiss{margin-top:18px;font-size:clamp(1.6rem,6.6vw,2.8rem);font-style:italic;font-weight:500;color:var(--olive);line-height:1.3}
 #admin{position:fixed;inset:0;z-index:100;background:rgba(243,239,228,.98);overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px 40px;color:var(--olive-d);font-size:1.1rem}
 #admin[hidden]{display:none}
@@ -133,6 +137,12 @@ svg.heart .r2{fill:none;stroke:var(--sky-d);stroke-width:1;stroke-dasharray:1 7;
   </section>
 
   <section class="scene" id="msgS"><p class="msg" id="msg" aria-label="tmk aro ekbar mone korai dei, valobasle kintu biye korte hoi."></p></section>
+
+  <section class="scene" id="wishS">
+    <h2 class="wish1" id="w1"></h2>
+    <svg id="wl" viewBox="0 0 200 20" aria-hidden="true"><path id="wlp" d="M6 12C40 2 70 20 100 10S160 2 194 12"/></svg>
+    <p class="wish2" id="w2"></p>
+  </section>
 
   <section class="scene" id="askS">
     <h1 class="ask" id="ask"></h1>
@@ -295,6 +305,11 @@ const lv=RM?[]:Array.from({length:14},()=>newLeaf(true));
 const hearts=[];let ambient=false,lastSpawn=0;
 const HC=['#8fbbdc','#6fa3cb','#7d8c43','#a7b36d'];
 function heartPath(s){cx.beginPath();cx.moveTo(0,s*.38);cx.bezierCurveTo(-s*1.05,-s*.25,-s*.6,-s*.95,0,-s*.42);cx.bezierCurveTo(s*.6,-s*.95,s*1.05,-s*.25,0,s*.38);cx.closePath();}
+function starPath(s){cx.beginPath();cx.moveTo(0,-s);cx.quadraticCurveTo(0,0,s,0);cx.quadraticCurveTo(0,0,0,s);cx.quadraticCurveTo(0,0,-s,0);cx.quadraticCurveTo(0,0,0,-s);cx.closePath();}
+const shooters=[];
+function shoot(){if(RM)return;shooters.push({x:W*1.05,y:H*.1,vx:-W/85,vy:H/240,trail:[]});}
+function sparkle(x,y,n,spread){if(RM)n=Math.min(n,4);
+  for(let i=0;i<n;i++)hearts.push({shape:'star',x:x+rnd(-spread,spread),y:y+rnd(-spread*.6,spread*.6),vx:rnd(-.3,.3),vy:rnd(-.5,-.1),g:0,s:rnd(5,13),a:1,life:rnd(70,120),age:Math.floor(rnd(0,20)),rot:0,c:Math.random()<.5?'#6fa3cb':'#8d9a55',drag:.99});}
 function burst(){const ox=W/2,oy=H*.5;
   for(let i=0;i<(RM?24:120);i++){const a=rnd(0,6.283),v=rnd(2,11)*(Math.random()<.3?1.5:1);
     hearts.push({x:ox,y:oy,vx:Math.cos(a)*v,vy:Math.sin(a)*v-2,g:.09,s:rnd(5,17),a:1,life:rnd(90,170),age:0,rot:rnd(-.5,.5),c:HC[Math.floor(rnd(0,4))],drag:.985});}}
@@ -307,11 +322,16 @@ function loop(t){
     cx.fillStyle=`rgba(${d.c},${d.a*(.6+.4*Math.sin(t/1400+d.p))})`;cx.beginPath();cx.arc(d.x,d.y,d.r,0,6.283);cx.fill();});
   lv.forEach((l,i)=>{l.y+=l.vy;l.x+=l.vx+Math.sin(t/900+l.p)*.5;l.rot+=l.vr;if(l.y>H+20||l.x>W+30)lv[i]=newLeaf(false);
     cx.save();cx.translate(l.x,l.y);cx.rotate(l.rot);cx.globalAlpha=l.a;cx.fillStyle=l.c;cx.beginPath();cx.moveTo(-l.s,0);cx.quadraticCurveTo(0,-l.s*.7,l.s,0);cx.quadraticCurveTo(0,l.s*.7,-l.s,0);cx.fill();cx.restore();});
+  for(let i=shooters.length-1;i>=0;i--){const q=shooters[i];q.x+=q.vx;q.y+=q.vy;q.trail.unshift({x:q.x,y:q.y});if(q.trail.length>34)q.trail.pop();
+    if(q.x<-80||q.y>H+80){shooters.splice(i,1);continue;}
+    for(let j=0;j<q.trail.length-1;j++){const f=1-j/q.trail.length;cx.strokeStyle=`rgba(111,163,203,${f*.85})`;cx.lineWidth=f*3.4;cx.lineCap='round';cx.beginPath();cx.moveTo(q.trail[j].x,q.trail[j].y);cx.lineTo(q.trail[j+1].x,q.trail[j+1].y);cx.stroke();}
+    cx.save();cx.shadowColor='#6fa3cb';cx.shadowBlur=18;cx.fillStyle='#ffffff';cx.beginPath();cx.arc(q.x,q.y,3.6,0,6.283);cx.fill();cx.restore();
+    if(Math.random()<.5)sparkle(q.x,q.y,1,6);}
   if(ambient&&!RM&&t-lastSpawn>1300){lastSpawn=t;hearts.push({x:rnd(0,W),y:H+20,vx:rnd(-.15,.15),vy:rnd(-.7,-.35),g:0,s:rnd(5,10),a:0,life:900,age:0,rot:0,c:HC[Math.floor(rnd(0,4))],drag:1,fadeIn:true,amb:true});}
   for(let i=hearts.length-1;i>=0;i--){const h=hearts[i];h.age++;h.vx*=h.drag;h.vy=h.vy*h.drag+h.g;h.x+=h.vx+Math.sin(h.age/30+h.s)*(h.amb||h.fadeIn?.35:0);h.y+=h.vy;
     const k=h.age/h.life;const al=h.fadeIn?Math.min(1,h.age/40)*(h.amb?.5:.9)*(1-Math.max(0,(k-.8)*5)):(1-k)*h.a;
     if(k>=1||h.y<-30){hearts.splice(i,1);continue;}
-    cx.save();cx.translate(h.x,h.y);cx.rotate(h.rot+Math.sin(h.age/40)*.1);cx.globalAlpha=Math.max(0,al);cx.fillStyle=h.c;heartPath(h.s);cx.fill();cx.restore();}
+    cx.save();cx.translate(h.x,h.y);cx.rotate(h.rot+Math.sin(h.age/40)*.1);cx.globalAlpha=Math.max(0,al);cx.fillStyle=h.c;if(h.shape==='star')starPath(h.s*(.65+.35*Math.sin(h.age/4)));else heartPath(h.s);cx.fill();cx.restore();}
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -413,6 +433,23 @@ async function run(){
   await sleep(4200);
   await an(m,[{opacity:1,filter:'blur(0)',transform:'scale(1)'},{opacity:0,filter:'blur(12px)',transform:'scale(.96) translateY(-18px)'}],1700,{e:'ease-in'});
   ms.classList.remove('on');await sleep(700);
+
+  /* special: the wish */
+  const ws=$('#wishS'),w1=$('#w1'),w2=$('#w2'),wl=$('#wlp');await show(ws);
+  wl.style.opacity=0;shoot();an($('#glow'),[{opacity:.7},{opacity:1},{opacity:.7}],4500);
+  await sleep(1100);
+  const b1=build(w1,'Wish?',{cs:150});
+  an(w1,[{letterSpacing:'-.03em'},{letterSpacing:'.1em'}],4200);
+  w1.animate([{filter:'drop-shadow(0 0 40px rgba(168,203,230,1))'},{filter:'drop-shadow(0 0 10px rgba(168,203,230,.25))'}],{duration:T(3500),easing:'ease-out',fill:'both'});
+  const sp=setInterval(()=>sparkle(W/2,H*.42,3,Math.min(W*.38,200)),450);
+  await reveal(b1,1700,'translateY(114%) scale(.8) rotate(-6deg)');
+  wl.style.opacity=1;await drawPath(wl,1200);
+  const b2=build(w2,'Tumi jdi amr hoita\ntahole mondo hoito nh:)',{cs:58,gap:150,lb:560});
+  await reveal(b2,1400);wave(b2);
+  sparkle(W/2,H*.55,10,Math.min(W*.4,220));
+  await sleep(3800);clearInterval(sp);
+  await an(ws,[{opacity:1,filter:'blur(0)'},{opacity:0,filter:'blur(12px)'}],1500,{e:'ease-in'});
+  ws.classList.remove('on');clearAn(ws);await sleep(500);
 
   /* the question */
   ambient=true;an($('#tint'),[{opacity:0},{opacity:.55}],4000);
