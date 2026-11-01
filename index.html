@@ -109,6 +109,10 @@ svg.heart .r2{fill:none;stroke:var(--sky-d);stroke-width:1;stroke-dasharray:1 7;
 .ad-empty,#ad-msg{font-style:italic;color:var(--olive);padding:8px 0}
 @media (max-width:480px){.ad-stats{grid-template-columns:repeat(2,1fr)}}
 @media (prefers-reduced-motion:reduce){.btn,#begin,#mute,.chip{transition:none}}
+#rt,#rt2{font-size:clamp(1.35rem,5.2vw,2.5rem)}
+#hand{position:relative;z-index:1;height:clamp(190px,42vh,340px);aspect-ratio:240/330;width:auto;overflow:visible}
+.rp{transform-box:fill-box;transform-origin:center}
+.bf{position:absolute;left:0;top:0;width:34px;height:28px;z-index:2;pointer-events:none}
 </style>
 </head>
 <body>
@@ -161,23 +165,57 @@ svg.heart .r2{fill:none;stroke:var(--sky-d);stroke-width:1;stroke-dasharray:1 7;
 
   <section class="scene" id="ringS">
     <svg id="fl" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none"></svg>
-    <p class="msg" id="rt" style="position:relative;z-index:1;font-size:clamp(1.5rem,6.4vw,2.8rem);margin-bottom:18px"></p>
-    <svg id="hand" viewBox="0 0 200 250" style="position:relative;z-index:1;width:clamp(170px,42vw,250px);height:auto;overflow:visible" aria-hidden="true">
-      <defs><linearGradient id="sk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dcc4"/><stop offset="1" stop-color="#e8b998"/></linearGradient></defs>
-      <g fill="url(#sk)" stroke="rgba(47,58,27,.3)" stroke-width="1.2">
-        <rect x="38" y="62" width="26" height="100" rx="13"/>
-        <rect x="66" y="32" width="26" height="130" rx="13"/>
-        <rect x="94" y="18" width="26" height="144" rx="13"/>
-        <rect x="122" y="34" width="26" height="128" rx="13"/>
-        <rect x="150" y="150" width="26" height="86" rx="13" transform="rotate(-38 160 170)"/>
-        <rect x="36" y="120" width="116" height="118" rx="44"/>
-      </g>
-      <g id="ringg" style="transform-box:fill-box;transform-origin:center;opacity:0">
-        <ellipse cx="79" cy="112" rx="14" ry="5.5" fill="none" stroke="#d9b24c" stroke-width="4"/>
-        <polygon points="79,92 87,100 79,108 71,100" fill="#eaf4fb" stroke="#6fa3cb" stroke-width="1.2"/>
+    <div id="rtw" style="position:relative;z-index:1;margin-bottom:10px">
+      <p class="msg" id="rt"></p>
+      <p class="msg" id="rt2" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"></p>
+    </div>
+    <svg id="hand" viewBox="0 0 240 330" aria-hidden="true">
+      <defs>
+        <linearGradient id="sk" gradientUnits="userSpaceOnUse" x1="40" y1="30" x2="210" y2="330"><stop offset="0" stop-color="#fbe3cf"/><stop offset=".5" stop-color="#f0c7a6"/><stop offset="1" stop-color="#dba788"/></linearGradient>
+        <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b8"/><stop offset=".45" stop-color="#e6b73f"/><stop offset="1" stop-color="#9c7014"/></linearGradient>
+        <linearGradient id="dia" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#d4ecfc"/><stop offset="1" stop-color="#7db8e3"/></linearGradient>
+        <radialGradient id="halog"><stop offset="0" stop-color="#ffffff" stop-opacity=".95"/><stop offset=".5" stop-color="#cfe6f5" stop-opacity=".45"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+        <linearGradient id="fg" gradientUnits="userSpaceOnUse" x1="0" y1="255" x2="0" y2="326"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>
+        <mask id="fade" maskUnits="userSpaceOnUse" x="-300" y="-500" width="840" height="1000"><rect x="-300" y="-500" width="840" height="1000" fill="url(#fg)"/></mask>
+        <g id="hshape">
+          <path d="M52 165C44 205 60 238 72 266L74 340L152 340L156 266C172 238 184 198 178 165Z"/>
+          <path transform="translate(66 175) rotate(-9)" d="M-13 0L-11 -73A11 11 0 0 1 11 -73L13 0Z"/>
+          <path transform="translate(96 175) rotate(-3)" d="M-14 0L-11.5 -106.5A11.5 11.5 0 0 1 11.5 -106.5L14 0Z"/>
+          <path transform="translate(127 173) rotate(1)" d="M-14.5 0L-12 -116A12 12 0 0 1 12 -116L14.5 0Z"/>
+          <path transform="translate(158 176) rotate(7)" d="M-14 0L-11.5 -100.5A11.5 11.5 0 0 1 11.5 -100.5L14 0Z"/>
+          <path transform="translate(172 254) rotate(36)" d="M-17 0L-13 -79A13 13 0 0 1 13 -79L17 0Z"/>
+        </g>
+      </defs>
+      <circle id="halo" cx="94" cy="130" r="82" fill="url(#halog)" opacity="0" style="transform-box:fill-box;transform-origin:center"/>
+      <g mask="url(#fade)">
+        <use href="#hshape" fill="none" stroke="rgba(120,72,48,.6)" stroke-width="3.4" stroke-linejoin="round"/>
+        <use href="#hshape" fill="url(#sk)"/>
+        <g fill="none" stroke="rgba(150,90,60,.2)" stroke-width="1.4" stroke-linecap="round">
+          <path d="M96 190C95 212 93 234 90 260"/><path d="M127 188C127 212 128 234 126 260"/><path d="M158 192C157 212 154 234 150 258"/>
+          <path d="M70 230C80 244 100 252 120 252" stroke-opacity=".5"/>
+        </g>
+        <g transform="translate(66 175) rotate(-9)"><g fill="none" stroke="rgba(150,90,60,.4)" stroke-width="1.2" stroke-linecap="round"><path d="M-6 -34Q0 -31 6 -34"/><path d="M-5 -37Q0 -35 5 -37"/><path d="M-5 -58Q0 -56 5 -58"/></g><rect x="-6.5" y="-81" width="13" height="13" rx="5.5" fill="#fbe6df" stroke="rgba(150,90,60,.4)" stroke-width="1"/><rect x="-3.5" y="-78" width="4" height="6" rx="2" fill="#fff" opacity=".6"/></g>
+        <g transform="translate(127 173) rotate(1)"><g fill="none" stroke="rgba(150,90,60,.4)" stroke-width="1.2" stroke-linecap="round"><path d="M-7 -58Q0 -55 7 -58"/><path d="M-6 -61Q0 -59 6 -61"/><path d="M-6 -92Q0 -90 6 -92"/></g><rect x="-7.5" y="-125" width="15" height="16" rx="6.5" fill="#fbe6df" stroke="rgba(150,90,60,.4)" stroke-width="1"/><rect x="-4" y="-122" width="4.5" height="7" rx="2" fill="#fff" opacity=".6"/></g>
+        <g transform="translate(158 176) rotate(7)"><g fill="none" stroke="rgba(150,90,60,.4)" stroke-width="1.2" stroke-linecap="round"><path d="M-7 -52Q0 -49 7 -52"/><path d="M-6 -55Q0 -53 6 -55"/><path d="M-6 -82Q0 -80 6 -82"/></g><rect x="-7" y="-109" width="14" height="15" rx="6" fill="#fbe6df" stroke="rgba(150,90,60,.4)" stroke-width="1"/><rect x="-4" y="-106" width="4" height="6" rx="2" fill="#fff" opacity=".6"/></g>
+        <g transform="translate(172 254) rotate(36)"><g fill="none" stroke="rgba(150,90,60,.4)" stroke-width="1.2" stroke-linecap="round"><path d="M-8 -42Q0 -39 8 -42"/><path d="M-7 -45Q0 -43 7 -45"/></g><rect x="-8" y="-87" width="16" height="16" rx="7" fill="#fbe6df" stroke="rgba(150,90,60,.4)" stroke-width="1"/><rect x="-4.5" y="-84" width="4.5" height="7" rx="2" fill="#fff" opacity=".6"/></g>
+        <g transform="translate(96 175) rotate(-3)">
+          <g fill="none" stroke="rgba(150,90,60,.4)" stroke-width="1.2" stroke-linecap="round"><path d="M-6 -62Q0 -59 6 -62"/><path d="M-5 -65Q0 -63 5 -65"/><path d="M-5 -88Q0 -86 5 -88"/></g>
+          <rect x="-7.5" y="-115" width="15" height="15" rx="6.5" fill="#fbe6df" stroke="rgba(150,90,60,.4)" stroke-width="1"/><rect x="-4" y="-112" width="4.5" height="6" rx="2" fill="#fff" opacity=".6"/>
+          <circle class="rp" cx="0" cy="-45" r="9" fill="none" stroke="#f0cf6a" stroke-width="1.6" opacity="0"/>
+          <circle class="rp" cx="0" cy="-45" r="9" fill="none" stroke="#bfe0f5" stroke-width="1.4" opacity="0"/>
+          <circle class="rp" cx="0" cy="-45" r="9" fill="none" stroke="#f0cf6a" stroke-width="1.2" opacity="0"/>
+          <g id="ringg" style="transform-box:fill-box;transform-origin:center;opacity:0">
+            <rect x="-14.5" y="-39" width="29" height="9" rx="4" fill="url(#gold)" stroke="#8a6212" stroke-width=".8"/>
+            <path d="M-11 -37.2H11" stroke="#fff7cf" stroke-width="1.2" stroke-linecap="round" opacity=".8"/>
+            <path d="M-7 -39L-8 -46M7 -39L8 -46" stroke="#d9a935" stroke-width="2" stroke-linecap="round"/>
+            <polygon points="-9,-47 -5,-55 5,-55 9,-47 0,-36" fill="url(#dia)" stroke="#5f98c4" stroke-width=".9" stroke-linejoin="round"/>
+            <path d="M-9 -47H9M-5 -55L-2 -47L0 -36L2 -47L5 -55M-2 -47L0 -55L2 -47" fill="none" stroke="#8cbfe4" stroke-width=".6"/>
+          </g>
+          <g transform="translate(6 -53)"><path id="spk" d="M0 -10Q0 0 10 0Q0 0 0 10Q0 0 -10 0Q0 0 0 -10Z" fill="#fff" opacity="0" style="transform-box:fill-box;transform-origin:center"/></g>
+        </g>
       </g>
     </svg>
-    <button class="mini" id="back" type="button" style="position:relative;z-index:1">Change my answer</button>
+    <button class="mini" id="back" type="button" style="position:relative;z-index:1;margin-top:12px">Change my answer</button>
   </section>
 
   <div id="gate">
@@ -351,6 +389,8 @@ function burst(){const ox=W/2,oy=H*.5;
   for(let i=0;i<(RM?24:120);i++){const a=rnd(0,6.283),v=rnd(2,11)*(Math.random()<.3?1.5:1);
     hearts.push({x:ox,y:oy,vx:Math.cos(a)*v,vy:Math.sin(a)*v-2,g:.09,s:rnd(5,17),a:1,life:rnd(90,170),age:0,rot:rnd(-.5,.5),c:HC[Math.floor(rnd(0,4))],drag:.985});}}
 function rain(){for(let i=0;i<(RM?10:60);i++)hearts.push({x:rnd(0,W),y:H+rnd(10,H*.8),vx:rnd(-.3,.3),vy:rnd(-2.6,-1),g:0,s:rnd(5,15),a:0,life:rnd(260,420),age:0,rot:rnd(-.3,.3),c:HC[Math.floor(rnd(0,4))],drag:1,fadeIn:true});}
+const PC=['#f7c6d0','#f4a8b8','#ffffff','#ffd98a','#c9b8e8','#a8cbe6'];
+function petals(n){for(let i=0;i<(RM?4:n);i++)hearts.push({shape:'petal',x:rnd(0,W),y:rnd(-60,-10),vx:rnd(.2,.9),vy:rnd(.7,1.7),g:0,s:rnd(5,10),a:.9,life:rnd(320,520),age:0,rot:rnd(0,6.28),vr:rnd(-.05,.05),c:PC[Math.floor(rnd(0,6))],drag:1,fadeIn:true});}
 function loop(t){
   cx.clearRect(0,0,W,H);
   bok.forEach(b=>{b.x+=b.vx;b.y+=b.vy;if(b.x<-b.r)b.x=W+b.r;if(b.x>W+b.r)b.x=-b.r;if(b.y<-b.r)b.y=H+b.r;if(b.y>H+b.r)b.y=-b.r;
@@ -365,10 +405,10 @@ function loop(t){
     cx.save();cx.shadowColor='#6fa3cb';cx.shadowBlur=18;cx.fillStyle='#ffffff';cx.beginPath();cx.arc(q.x,q.y,3.6,0,6.283);cx.fill();cx.restore();
     if(Math.random()<.5)sparkle(q.x,q.y,1,6);}
   if(ambient&&!RM&&t-lastSpawn>1300){lastSpawn=t;hearts.push({x:rnd(0,W),y:H+20,vx:rnd(-.15,.15),vy:rnd(-.7,-.35),g:0,s:rnd(5,10),a:0,life:900,age:0,rot:0,c:HC[Math.floor(rnd(0,4))],drag:1,fadeIn:true,amb:true});}
-  for(let i=hearts.length-1;i>=0;i--){const h=hearts[i];h.age++;h.vx*=h.drag;h.vy=h.vy*h.drag+h.g;h.x+=h.vx+Math.sin(h.age/30+h.s)*(h.amb||h.fadeIn?.35:0);h.y+=h.vy;
+  for(let i=hearts.length-1;i>=0;i--){const h=hearts[i];h.age++;if(h.vr)h.rot+=h.vr;h.vx*=h.drag;h.vy=h.vy*h.drag+h.g;h.x+=h.vx+Math.sin(h.age/30+h.s)*(h.amb||h.fadeIn?.35:0);h.y+=h.vy;
     const k=h.age/h.life;const al=h.fadeIn?Math.min(1,h.age/40)*(h.amb?.5:.9)*(1-Math.max(0,(k-.8)*5)):(1-k)*h.a;
     if(k>=1||h.y<-30){hearts.splice(i,1);continue;}
-    cx.save();cx.translate(h.x,h.y);cx.rotate(h.rot+Math.sin(h.age/40)*.1);cx.globalAlpha=Math.max(0,al);cx.fillStyle=h.c;if(h.shape==='star')starPath(h.s*(.65+.35*Math.sin(h.age/4)));else heartPath(h.s);cx.fill();cx.restore();}
+    cx.save();cx.translate(h.x,h.y);cx.rotate(h.rot+Math.sin(h.age/40)*.1);cx.globalAlpha=Math.max(0,al);cx.fillStyle=h.c;if(h.shape==='star')starPath(h.s*(.65+.35*Math.sin(h.age/4)));else if(h.shape==='petal'){cx.beginPath();cx.ellipse(0,0,h.s,h.s*.5,0,0,6.283);}else heartPath(h.s);cx.fill();cx.restore();}
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -530,14 +570,32 @@ function flower(svg,x,base,h,r,col,delay){
   });
   const ct=document.createElementNS(NS,'circle');ct.setAttribute('r',r*.2);ct.setAttribute('fill','#e8b84a');ct.style.transformOrigin='0 0';b.appendChild(ct);
   an(ct,[{transform:'scale(0)'},{transform:'scale(1)'}],900,{delay:delay+3400});
+  for(let i=0;i<10;i++){const d=document.createElementNS(NS,'circle'),an2=i*0.628;d.setAttribute('cx',Math.cos(an2)*r*.3);d.setAttribute('cy',Math.sin(an2)*r*.3);d.setAttribute('r',r*.045);d.setAttribute('fill','#b9852a');d.style.transformOrigin='0 0';b.appendChild(d);an(d,[{transform:'scale(0)'},{transform:'scale(1)'}],700,{delay:delay+3600+i*40});}
   if(!RM){g.style.transformOrigin=`${x}px ${base}px`;g.animate([{transform:'rotate(-1.6deg)'},{transform:'rotate(1.6deg)'}],{duration:4200+Math.random()*2000,delay:T(delay+4500),direction:'alternate',iterations:Infinity,easing:'ease-in-out'});}
+}
+
+/* ---------- Butterflies ---------- */
+let ringTimers=[];
+function clearRing(){ringTimers.forEach(clearInterval);ringTimers=[];document.querySelectorAll('.bf').forEach(e=>e.remove());}
+function butterfly(parent,col,col2,delay){
+  const s=document.createElementNS(NS,'svg');s.setAttribute('class','bf');s.setAttribute('viewBox','0 0 40 32');
+  const wing=(sx)=>`<g transform="translate(20 16) scale(${sx} 1)"><g class="wg"><path d="M0 0C-4 -14 -19 -14 -17 -4C-16 2 -6 3 0 0Z" fill="${col}"/><path d="M0 1C-3 8 -12 14 -10 6C-9 3 -4 1 0 1Z" fill="${col2}"/><circle cx="-10" cy="-6" r="2" fill="#fff" opacity=".75"/></g></g>`;
+  s.innerHTML=wing(1)+wing(-1)+'<ellipse cx="20" cy="16" rx="1.4" ry="6" fill="#2f3a1b"/>';
+  parent.appendChild(s);
+  s.querySelectorAll('.wg').forEach(g=>{g.style.transformOrigin='0 0';if(!RM)g.animate([{transform:'scaleX(1)'},{transform:'scaleX(.2)'},{transform:'scaleX(1)'}],{duration:260+rnd(0,120),iterations:Infinity,easing:'ease-in-out'});});
+  const pts=7,kf=[],y0=rnd(H*.18,H*.6),dir=Math.random()<.5?1:-1;
+  for(let i=0;i<pts;i++){const f=i/(pts-1);kf.push({transform:`translate(${(dir>0?-60+f*(W+120):W+60-f*(W+120)).toFixed(0)}px,${(y0+Math.sin(f*9+delay)*H*.12+Math.cos(f*5)*H*.06).toFixed(0)}px) rotate(${(Math.sin(f*11)*14).toFixed(0)}deg)`});}
+  if(!RM)s.animate(kf,{duration:T(15000+rnd(0,7000)),delay:T(delay),iterations:Infinity,easing:'ease-in-out',fill:'backwards'});
+  else s.style.transform=`translate(${W*.7}px,${H*.3}px)`;
 }
 
 /* ---------- Ring + flowers scene ---------- */
 async function ringScene(){
-  const ys=$('#yesS'),rs=$('#ringS'),fl=$('#fl'),hand=$('#hand'),ring=$('#ringg'),rt=$('#rt'),bk=$('#back');
+  const ys=$('#yesS'),rs=$('#ringS'),fl=$('#fl'),hand=$('#hand'),ring=$('#ringg'),rt=$('#rt'),rt2=$('#rt2'),bk=$('#back'),halo=$('#halo'),spk=$('#spk'),rps=[...document.querySelectorAll('.rp')];
   await an(ys,[{opacity:1},{opacity:0}],1200,{e:'ease-in'});ys.classList.remove('on');clearAn(ys);
-  [hand,ring,rt,bk].forEach(clearAn);ring.style.opacity=0;bk.style.opacity=0;rt.textContent='';
+  clearRing();
+  [hand,ring,rt,rt2,bk,halo,spk,...rps].forEach(clearAn);
+  ring.style.opacity=0;bk.style.opacity=0;rt.textContent='';rt2.textContent='';halo.style.opacity=0;spk.style.opacity=0;rps.forEach(r=>r.style.opacity=0);
   await show(rs);
   fl.textContent='';fl.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const cols=['#f4a8b8','#f7c6d0','#a8cbe6','#ffd98a','#f4a8b8','#c9b8e8'];
@@ -546,17 +604,41 @@ async function ringScene(){
     const x=(i+.5)*W/n+rnd(-18,18);
     flower(fl,x,H+10,rnd(H*.22,H*.5),Math.max(24,Math.min(44,W/16)),cols[i%cols.length],rnd(0,1800));
   }
-  an(hand,[{opacity:0,transform:'translateY(50px)'},{opacity:1,transform:'none'}],1600);
-  await sleep(1800);
+  /* extra life: butterflies + falling petals */
+  [['#f4a8b8','#f7c6d0'],['#a8cbe6','#d9ecf8'],['#ffd98a','#fff0c2'],['#c9b8e8','#e6dcf5']].forEach((c,i)=>butterfly(rs,c[0],c[1],i*1800));
+  petals(14);ringTimers.push(setInterval(()=>petals(5),1400));
+  ringTimers.push(setInterval(()=>sparkle(rnd(0,W),rnd(H*.2,H*.9),3,40),1600));
+  an(hand,[{opacity:0,transform:'translateY(70px) scale(.92)'},{opacity:1,transform:'none'}],1800);
+  await sleep(2000);
+  /* the ring drops onto the ring finger */
   ring.style.opacity=1;
-  await an(ring,[{transform:'translateY(-110px) scale(1.7)',opacity:0},{transform:'translateY(0) scale(1)',opacity:1}],1800);
-  const r=ring.getBoundingClientRect();sparkle(r.left+r.width/2,r.top+r.height/2,18,40);
-  setTimeout(()=>sparkle(r.left+r.width/2,r.top,12,50),500);
-  rain();
+  await an(ring,[
+    {transform:'translateY(-170px) rotate(-50deg) scale(2)',opacity:0},
+    {transform:'translateY(5px) rotate(8deg) scale(1)',opacity:1,offset:.62},
+    {transform:'translateY(-5px) rotate(-3deg) scale(1.06)',offset:.78},
+    {transform:'translateY(0) rotate(0) scale(1)',opacity:1}],2400);
+  const r=ring.getBoundingClientRect();
+  sparkle(r.left+r.width/2,r.top+r.height/2,22,40);
+  setTimeout(()=>sparkle(r.left+r.width/2,r.top,14,50),500);
+  burst();
+  an(halo,[{opacity:0,transform:'scale(.5)'},{opacity:1,transform:'scale(1)'}],1800);
+  if(!RM){
+    setTimeout(()=>halo.animate([{opacity:1,transform:'scale(1)'},{opacity:.65,transform:'scale(1.12)'},{opacity:1,transform:'scale(1)'}],{duration:3200,iterations:Infinity,easing:'ease-in-out'}),1900);
+    rps.forEach((p,i)=>p.animate([{transform:'scale(1)',opacity:.85},{transform:'scale(6)',opacity:0}],{duration:2800,delay:i*930,iterations:Infinity,easing:'ease-out'}));
+    spk.animate([{transform:'scale(0) rotate(0)',opacity:0},{transform:'scale(1.4) rotate(90deg)',opacity:1},{transform:'scale(0) rotate(180deg)',opacity:0}],{duration:2200,iterations:Infinity,easing:'ease-in-out'});
+    hand.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(-7px) rotate(1.4deg)'}],{duration:3800,direction:'alternate',iterations:Infinity,easing:'ease-in-out'});
+  }
+  /* words */
   const b=build(rt,'Pakhi, tmk amar kore nilam,\nforever. 💍',{cs:55,gap:160,lb:500});
   rt.animate([{filter:'drop-shadow(0 0 28px rgba(168,203,230,1))'},{filter:'drop-shadow(0 0 6px rgba(168,203,230,.2))'}],{duration:T(3200),fill:'both'});
   await reveal(b,1300);wave(b);
-  await an(bk,[{opacity:0},{opacity:1}],1600,{delay:2500});
+  await sleep(2600);
+  await an(rt,[{opacity:1,filter:'blur(0)'},{opacity:0,filter:'blur(10px)'}],1200,{e:'ease-in'});
+  const b2=build(rt2,'Tumi amar, ami tomar,\nshesh nishash porjonto. 🤍',{cs:55,gap:160,lb:500});
+  rt2.animate([{filter:'drop-shadow(0 0 28px rgba(168,203,230,1))'},{filter:'drop-shadow(0 0 6px rgba(168,203,230,.2))'}],{duration:T(3200),fill:'both'});
+  rain();
+  await reveal(b2,1300);wave(b2);
+  await an(bk,[{opacity:0},{opacity:1}],1600,{delay:1800});
   yes.disabled=false;
 }
 
@@ -598,10 +680,10 @@ yes.onclick=async()=>{
 };
 $('#back').onclick=async()=>{
   const rs=$('#ringS'),as=$('#askS');
-  stopYes();resumeMain();
+  stopYes();clearRing();resumeMain();
   await an(rs,[{opacity:1},{opacity:0}],700,{e:'ease-in'});
   rs.classList.remove('on');clearAn(rs);clearAn($('#back'));$('#back').style.opacity=0;
-  $('#fl').textContent='';$('#rt').textContent='';
+  $('#fl').textContent='';$('#rt').textContent='';$('#rt2').textContent='';
   {const k=$('#kiss');clearAn(k);k.textContent='';}clearAn($('#hs2'));
   hint.style.opacity=0;noCount=0;no.style.setProperty('--g',1);yes.style.setProperty('--g',1);yes.disabled=false;
   an($('#tint'),[{opacity:.2},{opacity:.55}],1500);
