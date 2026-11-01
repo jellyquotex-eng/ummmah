@@ -66,7 +66,10 @@ svg.heart .r2{fill:none;stroke:var(--sky-d);stroke-width:1;stroke-dasharray:1 7;
 #mute:hover{transform:scale(1.1)}
 #mute svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .who{display:flex;flex-direction:column;align-items:center;gap:14px}
-.who .lbl{font-style:italic;font-size:1.2rem;color:var(--olive)}
+.who .lbl{font-style:italic;font-size:1.25rem;color:var(--olive)}
+#nameIn{width:min(18em,80vw);text-align:center;font:500 italic 1.6rem 'Cormorant Garamond',Georgia,serif;font-size:max(16px,1.6rem);color:var(--olive-d);background:rgba(255,255,255,.55);border:0;border-bottom:2px solid var(--olive);border-radius:14px 14px 0 0;padding:.6rem 1rem;outline:none;transition:background .4s,border-color .4s,box-shadow .4s}
+#nameIn::placeholder{color:rgba(47,58,27,.4)}
+#nameIn:focus{background:rgba(255,255,255,.85);border-bottom-color:var(--sky-d);box-shadow:0 10px 30px -14px rgba(111,163,203,.8)}
 #chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:22em;min-height:2.6rem}
 .chip{font:600 1.15rem 'Cormorant Garamond',Georgia,serif;padding:.6rem 1.3rem;border-radius:999px;border:1px solid rgba(102,116,47,.45);background:rgba(255,255,255,.55);color:var(--olive-d);cursor:pointer;transition:background .4s,color .4s,box-shadow .4s,transform .4s cubic-bezier(.22,1,.36,1)}
 .chip:hover{transform:translateY(-2px)}
@@ -149,7 +152,7 @@ svg.heart .r2{fill:none;stroke:var(--sky-d);stroke-width:1;stroke-dasharray:1 7;
 
   <div id="gate">
     <p>Something small, made only for you.</p>
-    <div class="who"><span class="lbl">Who is opening this?</span><div id="chips" role="radiogroup" aria-label="Choose your name"></div></div>
+    <div class="who"><label class="lbl" for="nameIn">Write your name</label><input id="nameIn" type="text" maxlength="30" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="your name"></div>
     <button id="begin" type="button" disabled>BEGIN ♡</button>
   </div>
 </div>
@@ -158,9 +161,6 @@ svg.heart .r2{fill:none;stroke:var(--sky-d);stroke-width:1;stroke-dasharray:1 7;
   <div class="ad-wrap">
     <div class="ad-head"><h2>Admin panel</h2><button class="ad-btn" id="ad-close" type="button">Close</button></div>
     <div class="ad-stats" id="ad-stats"></div>
-    <div class="ad-box"><h3>Names on the entry screen</h3>
-      <div class="ad-add"><input id="ad-in" type="text" placeholder="Add a name" maxlength="30" autocomplete="off"><button class="ad-btn" id="ad-add" type="button">Add</button></div>
-      <div id="ad-chips"></div></div>
     <div id="ad-msg"></div>
     <div id="ad-list"></div>
   </div>
@@ -261,14 +261,19 @@ function startSong(){
 }
 EVS.forEach(e=>addEventListener(e,startSong,true));
 /* Nope song: plays when she taps Nope; the main song pauses meanwhile and comes back after */
-const nopeSong=new Audio('ssstik.io_1793527082095.mp3');nopeSong.preload='auto';
+const NOPE_SRC='ssstik.io_1793527082095.mp3';
+let nopeSong=new Audio(NOPE_SRC);nopeSong.preload='auto';
 let nopeOn=false;
 function resumeMain(){if(!songOn)return;song.volume=0;song.play().then(()=>fadeSong(LEVEL,1800)).catch(()=>{});}
 function playNope(){
   if(nopeOn)return;boost();
   nopeSong.currentTime=0;nopeSong.volume=1;
   const go=()=>{nopeOn=true;song.pause();};
-  try{const p=nopeSong.play();if(p&&p.then)p.then(go).catch(()=>{});else go();}catch(e){}
+  const retry=()=>{ /* backup: a fresh element that plays natively, even if the audio graph misbehaves */
+    const a=new Audio(NOPE_SRC);a.volume=1;a.addEventListener('ended',()=>{nopeOn=false;resumeMain();});
+    a.play().then(()=>{nopeSong=a;go();}).catch(e=>console.warn('nope song failed',e));
+  };
+  try{const p=nopeSong.play();if(p&&p.then)p.then(go).catch(retry);else go();}catch(e){retry();}
 }
 function stopNope(){if(!nopeOn)return;nopeOn=false;nopeSong.pause();nopeSong.currentTime=0;resumeMain();}
 nopeSong.addEventListener('ended',()=>{nopeOn=false;resumeMain();});
@@ -465,18 +470,10 @@ $('#back').onclick=async()=>{
 };
 
 /* ---------- Visitor name, device model, Firebase log ---------- */
-const DEFAULT_NAMES=['Pakhi'];
 let myName='',entryP=null;
-function renderChips(list){
-  const box=$('#chips');if(!box)return;box.textContent='';
-  list.forEach(n=>{const b=document.createElement('button');b.type='button';b.className='chip';b.setAttribute('role','radio');b.setAttribute('aria-checked',n===myName);b.textContent=n;
-    b.onclick=()=>{myName=n;[...box.children].forEach(c=>c.setAttribute('aria-checked',c===b));$('#begin').disabled=false;};box.appendChild(b);});
-  if(myName&&!list.includes(myName)){myName='';$('#begin').disabled=true;}
-}
-function initNames(){if(!window.FB)return;FB.names(l=>renderChips(l.length?l.map(x=>x.name):DEFAULT_NAMES),()=>renderChips(DEFAULT_NAMES));}
-addEventListener('fb-ready',initNames);addEventListener('fb-failed',()=>renderChips(DEFAULT_NAMES));
-if(window.FB)initNames();
-setTimeout(()=>{const c=$('#chips');if(c&&!c.children.length)renderChips(DEFAULT_NAMES);},3000);
+const nameIn=$('#nameIn'),beginBtn=$('#begin');
+nameIn.addEventListener('input',()=>{myName=nameIn.value.trim();beginBtn.disabled=!myName;});
+nameIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&myName)beginBtn.click();});
 
 async function deviceInfo(){
   const ua=navigator.userAgent;let model='',platform='';
@@ -513,21 +510,14 @@ function renderRows(rows){
     list.appendChild(c);
   });
 }
-function renderNames(list){
-  const box=$('#ad-chips');box.textContent='';
-  if(!list.length)box.appendChild(el('span','ad-empty','No names yet. The entry screen shows “Pakhi” until you add one.'));
-  list.forEach(x=>{const c=el('span','ad-chip',x.name);const b=el('button','','×');b.type='button';b.setAttribute('aria-label','Remove '+x.name);b.onclick=()=>FB.delName(x.id);c.appendChild(b);box.appendChild(c);});
-}
 const denied=()=>adMsg('Could not read the database. Check the Realtime Database rules in Firebase (see notes).');
 function openAdmin(){
   if(!adm.hidden)return;adm.hidden=false;
   if(!window.FB){$('#ad-list').textContent='';adMsg('Firebase is not connected. Open the site over the internet and try again.');return;}
-  unW=FB.watch(renderRows,denied);unN=FB.names(renderNames,denied);
+  unW=FB.watch(renderRows,denied);
 }
-function closeAdmin(){adm.hidden=true;if(unW)unW();if(unN)unN();unW=unN=null;}
+function closeAdmin(){adm.hidden=true;if(unW)unW();unW=null;}
 $('#ad-close').onclick=closeAdmin;
-function addName(){const i=$('#ad-in'),n=i.value.trim();if(!n||!window.FB)return;FB.addName(n).catch(denied);i.value='';}
-$('#ad-add').onclick=addName;$('#ad-in').addEventListener('keydown',e=>{if(e.key==='Enter')addName();});
 let lastP=0;
 addEventListener('keydown',e=>{
   if(e.key==='Escape'&&!adm.hidden){closeAdmin();return;}
