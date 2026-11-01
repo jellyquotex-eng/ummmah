@@ -238,16 +238,45 @@ const hide=async s=>{await an(s,[{opacity:1},{opacity:0}],1100,{e:'ease-in'});s.
 
 /* ---------- Music: your mp3, starts on the first click/tap anywhere ---------- */
 const song=new Audio('ssstik.io_1793526595387.mp3');song.loop=true;song.preload='auto';song.volume=0;
-const LEVEL=.85;let songOn=false,vt=null;
+const LEVEL=1,BOOST=2.6;let songOn=false,vt=null,actx=null;
+/* Louder than a normal <audio> can go: Web Audio gain + a soft limiter so it never distorts */
+function boost(){
+  if(location.protocol==='file:')return;
+  try{
+    if(!actx){
+      const AC=window.AudioContext||window.webkitAudioContext;actx=new AC();
+      const lim=actx.createDynamicsCompressor();lim.threshold.value=-8;lim.knee.value=12;lim.ratio.value=10;lim.attack.value=.003;lim.release.value=.2;
+      const g=actx.createGain();g.gain.value=BOOST;g.connect(lim);lim.connect(actx.destination);
+      [song,nopeSong].forEach(a=>actx.createMediaElementSource(a).connect(g));
+    }
+    if(actx.state==='suspended')actx.resume();
+  }catch(e){console.warn('volume boost unavailable',e);}
+}
 function fadeSong(v,ms){clearInterval(vt);const a=song.volume,t0=performance.now();vt=setInterval(()=>{const k=Math.min(1,(performance.now()-t0)/ms);try{song.volume=Math.max(0,Math.min(1,a+(v-a)*k));}catch(e){}if(k>=1)clearInterval(vt);},50);}
 const EVS=['click','touchend','pointerup'];
 function startSong(){
-  if(songOn)return;
-  const ok=()=>{if(songOn)return;songOn=true;fadeSong(LEVEL,3500);EVS.forEach(e=>removeEventListener(e,startSong,true));};
+  if(songOn)return;boost();
+  const ok=()=>{if(songOn)return;songOn=true;if(nopeOn){song.pause();}else fadeSong(LEVEL,3500);EVS.forEach(e=>removeEventListener(e,startSong,true));};
   try{const p=song.play();if(p&&p.then)p.then(ok).catch(()=>{});else ok();}catch(e){}
 }
 EVS.forEach(e=>addEventListener(e,startSong,true));
-document.addEventListener('visibilitychange',()=>{if(!songOn)return;document.hidden?song.pause():song.play().catch(()=>{});});
+/* Nope song: plays when she taps Nope; the main song pauses meanwhile and comes back after */
+const nopeSong=new Audio('ssstik.io_1793527082095.mp3');nopeSong.preload='auto';
+let nopeOn=false;
+function resumeMain(){if(!songOn)return;song.volume=0;song.play().then(()=>fadeSong(LEVEL,1800)).catch(()=>{});}
+function playNope(){
+  if(nopeOn)return;boost();
+  nopeSong.currentTime=0;nopeSong.volume=1;
+  const go=()=>{nopeOn=true;song.pause();};
+  try{const p=nopeSong.play();if(p&&p.then)p.then(go).catch(()=>{});else go();}catch(e){}
+}
+function stopNope(){if(!nopeOn)return;nopeOn=false;nopeSong.pause();nopeSong.currentTime=0;resumeMain();}
+nopeSong.addEventListener('ended',()=>{nopeOn=false;resumeMain();});
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){song.pause();nopeSong.pause();}
+  else if(nopeOn)nopeSong.play().catch(()=>{});
+  else if(songOn)song.play().catch(()=>{});
+});
 
 /* ---------- Canvas: bokeh, motes, drifting leaves, hearts ---------- */
 const cv=$('#fx'),cx=cv.getContext('2d');let W,H,DPR;
@@ -401,11 +430,11 @@ no.onclick=()=>{
   const side=noCount%2?1:-1;
   no.style.setProperty('--g',Math.max(.8,1-noCount*.04));yes.style.setProperty('--g',Math.min(1.3,1+noCount*.05));
   yes.animate([{transform:'scale(1)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:T(700),easing:EASE});
-  logAnswer('nope',noCount);hint.textContent=msg;clearAn(hint);
+  logAnswer('nope',noCount);playNope();hint.textContent=msg;clearAn(hint);
   an(hint,[{opacity:0,transform:`translate(${side*18}px,10px)`,filter:'blur(6px)'},{opacity:1,transform:'none',filter:'blur(0)'}],900);
 };
 yes.onclick=async()=>{
-  yes.disabled=true;logAnswer('yes',noCount);burst();fadeSong(1,1500);setTimeout(()=>fadeSong(LEVEL,6000),4000);
+  yes.disabled=true;logAnswer('yes',noCount);burst();stopNope();fadeSong(1,1500);setTimeout(()=>fadeSong(LEVEL,6000),4000);
   an($('#tint'),[{opacity:.55},{opacity:.2}],2500);
   const as=$('#askS'),ys=$('#yesS');
   await an(as,[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(1.06)'}],900,{e:'ease-in'});
