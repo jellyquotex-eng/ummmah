@@ -152,7 +152,6 @@ svg.heart .r2{fill:none;stroke:var(--sky-d);stroke-width:1;stroke-dasharray:1 7;
     <div class="who"><span class="lbl">Who is opening this?</span><div id="chips" role="radiogroup" aria-label="Choose your name"></div></div>
     <button id="begin" type="button" disabled>BEGIN ♡</button>
   </div>
-  <button id="mute" type="button" aria-label="Mute music"></button>
 </div>
 
 <div id="admin" hidden role="dialog" aria-label="Admin panel">
@@ -237,22 +236,18 @@ function wave(b){ // gentle idle life on letters
 const show=s=>{s.classList.add('on');return an(s,[{opacity:0},{opacity:1}],900,{e:'ease-out'})};
 const hide=async s=>{await an(s,[{opacity:1},{opacity:0}],1100,{e:'ease-in'});s.classList.remove('on');clearAn(s)};
 
-/* ---------- Audio: soft generated pad ---------- */
-let ac,master,muted=false;const LEVEL=.2;
-const prog=[[110,220,261.63,329.63],[87.31,174.61,220,261.63],[130.81,196,261.63,329.63],[98,196,246.94,293.66]];let ci=0;
-function fade(v,s){if(!ac)return;const n=ac.currentTime;master.gain.cancelScheduledValues(n);master.gain.setValueAtTime(master.gain.value,n);master.gain.linearRampToValueAtTime(v,n+s);}
-function chord(){const n=ac.currentTime,f=prog[ci++%prog.length];
-  f.forEach((hz,i)=>[-4,4].forEach(dt=>{const o=ac.createOscillator(),g=ac.createGain();o.type=i?'sine':'triangle';o.frequency.value=hz;o.detune.value=dt;
-    g.gain.setValueAtTime(0,n);g.gain.linearRampToValueAtTime(.05,n+2.4);g.gain.linearRampToValueAtTime(0,n+8.2);
-    o.connect(g);g.connect(master);o.start(n);o.stop(n+8.4);}));}
-function startAudio(){try{ac=new(window.AudioContext||window.webkitAudioContext)();master=ac.createGain();master.gain.value=0;
-  const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;master.connect(lp);lp.connect(ac.destination);
-  if(ac.state==='suspended')ac.resume();chord();setInterval(chord,6500);fade(LEVEL,4);}catch(e){ac=null;}}
-const ON='<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg>';
-const OFF='<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
-const mute=$('#mute');mute.innerHTML=ON;
-mute.onclick=()=>{muted=!muted;mute.innerHTML=muted?OFF:ON;mute.setAttribute('aria-label',muted?'Unmute music':'Mute music');if(ac){if(ac.state==='suspended')ac.resume();fade(muted?0:LEVEL,1.4);}};
-document.addEventListener('visibilitychange',()=>{if(!ac)return;document.hidden?ac.suspend():(!muted&&ac.resume());});
+/* ---------- Music: your mp3, starts on the first click/tap anywhere ---------- */
+const song=new Audio('ssstik.io_1793526595387.mp3');song.loop=true;song.preload='auto';song.volume=0;
+const LEVEL=.85;let songOn=false,vt=null;
+function fadeSong(v,ms){clearInterval(vt);const a=song.volume,t0=performance.now();vt=setInterval(()=>{const k=Math.min(1,(performance.now()-t0)/ms);try{song.volume=Math.max(0,Math.min(1,a+(v-a)*k));}catch(e){}if(k>=1)clearInterval(vt);},50);}
+const EVS=['click','touchend','pointerup'];
+function startSong(){
+  if(songOn)return;
+  const ok=()=>{if(songOn)return;songOn=true;fadeSong(LEVEL,3500);EVS.forEach(e=>removeEventListener(e,startSong,true));};
+  try{const p=song.play();if(p&&p.then)p.then(ok).catch(()=>{});else ok();}catch(e){}
+}
+EVS.forEach(e=>addEventListener(e,startSong,true));
+document.addEventListener('visibilitychange',()=>{if(!songOn)return;document.hidden?song.pause():song.play().catch(()=>{});});
 
 /* ---------- Canvas: bokeh, motes, drifting leaves, hearts ---------- */
 const cv=$('#fx'),cx=cv.getContext('2d');let W,H,DPR;
@@ -347,7 +342,6 @@ async function introLine(txt,hold){
   await an(el,[{opacity:1,filter:'blur(0)',transform:'scale(1)'},{opacity:0,filter:'blur(12px)',transform:'scale(1.06)'}],1300,{e:'ease-in'});
 }
 async function run(){
-  $('#mute').style.display='flex';
   an($('#bt'),[{transform:'translateY(-100%)'},{transform:'none'}],2400);an($('#bb'),[{transform:'translateY(100%)'},{transform:'none'}],2400);
   $('#cam').animate([{transform:'scale(1.28)'},{transform:'scale(1)'}],{duration:T(40000),easing:'cubic-bezier(.1,.6,.3,1)',fill:'both'});
   an($('#rays'),[{opacity:0},{opacity:1}],6000,{delay:1500});
@@ -357,8 +351,8 @@ async function run(){
   await sleep(600);
   const intro=$('#intro');await show(intro);
   await introLine('Every love story\nbegins with a quiet moment.',1300);
-  await introLine('Not loud. Not rehearsed.\nJust two hearts, slowly finding each other.',1500);
-  await introLine('Tomar jonno,\nshudhu tomar jonno.',1700);
+  await introLine('finally i realise,\nami tmk cahra takte parbo na.....!',1600);
+  await introLine('trust me tmk cahra takte prbo naaaaaa naaaaaa naaaaaaa.',2000);
   $('#it').style.display='none';
   const hs=$('#hs');hs.style.display='block';
   an(hs,[{opacity:0,transform:'scale(.82)'},{opacity:1,transform:'scale(1)'}],1800);
@@ -411,7 +405,7 @@ no.onclick=()=>{
   an(hint,[{opacity:0,transform:`translate(${side*18}px,10px)`,filter:'blur(6px)'},{opacity:1,transform:'none',filter:'blur(0)'}],900);
 };
 yes.onclick=async()=>{
-  yes.disabled=true;logAnswer('yes',noCount);burst();fade(muted?0:.34,1.5);setTimeout(()=>fade(muted?0:LEVEL,6),4000);
+  yes.disabled=true;logAnswer('yes',noCount);burst();fadeSong(1,1500);setTimeout(()=>fadeSong(LEVEL,6000),4000);
   an($('#tint'),[{opacity:.55},{opacity:.2}],2500);
   const as=$('#askS'),ys=$('#yesS');
   await an(as,[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(1.06)'}],900,{e:'ease-in'});
@@ -514,7 +508,7 @@ addEventListener('keydown',e=>{
 let taps=[];
 addEventListener('pointerdown',e=>{if(e.clientX>70||e.clientY>70)return;const n=Date.now();taps=taps.filter(t=>n-t<3000);taps.push(n);if(taps.length>=5){taps=[];openAdmin();}});
 
-$('#begin').onclick=()=>{if(!myName)return;$('#begin').disabled=true;startAudio();logEntry();run();};
+$('#begin').onclick=()=>{if(!myName)return;$('#begin').disabled=true;startSong();logEntry();run();};
 })();
 </script>
 </body>
