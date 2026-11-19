@@ -140,7 +140,7 @@ svg.heart .r2{fill:none;stroke:var(--sky-d);stroke-width:1;stroke-dasharray:1 7;
     <p class="t" id="it"></p>
   </section>
 
-  <section class="scene" id="msgS"><p class="msg" id="msg" aria-label="Accah Lamu, tmi amar hole ki emn khoti hobe?"></p></section>
+  <section class="scene" id="msgS"><p class="msg" id="msg"></p></section>
 
   <section class="scene" id="wishS">
     <h2 class="wish1" id="w1"></h2>
@@ -219,7 +219,6 @@ svg.heart .r2{fill:none;stroke:var(--sky-d);stroke-width:1;stroke-dasharray:1 7;
   </section>
 
   <div id="gate">
-    <p>Something small, made only for you.</p>
     <div class="who"><label class="lbl" for="nameIn">Write your name</label><input id="nameIn" type="text" maxlength="30" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="your name"></div>
     <button id="begin" type="button" disabled>BEGIN ♡</button>
   </div>
@@ -465,12 +464,25 @@ function growVines(){
 }
 
 /* ---------- Timeline ---------- */
-const MSG='Accah Lamu,\ntmi amar hole ki emn khoti hobe?';
 async function introLine(txt,hold){
   const el=$('#it');clearAn(el);el.style.display='';
   const b=build(el,txt,{cs:52,gap:110,lb:260});
   await reveal(b,1300,'translateY(112%) scale(.92)');await sleep(hold);
   await an(el,[{opacity:1,filter:'blur(0)',transform:'scale(1)'},{opacity:0,filter:'blur(12px)',transform:'scale(1.06)'}],1300,{e:'ease-in'});
+}
+/* one line of the story: reveal, hold, fade away */
+async function storyLine(txt,o={}){
+  const m=$('#msg');clearAn(m);
+  m.style.fontSize=o.fs||'clamp(1.5rem,6.4vw,2.9rem)';
+  m.style.color=o.strong?'var(--olive)':'';
+  const b=build(m,txt,{em:o.em,cs:o.cs||48,gap:o.gap||130,lb:o.lb||520});
+  m.animate([{filter:o.strong?'drop-shadow(0 0 54px rgba(168,203,230,1)) drop-shadow(0 0 16px rgba(255,255,255,.9))':'drop-shadow(0 0 28px rgba(168,203,230,1))'},{filter:'drop-shadow(0 0 8px rgba(168,203,230,.2))'}],{duration:T(b.total+2600),easing:'ease-out',fill:'both'});
+  await reveal(b,o.dur||1300);
+  b.ems.forEach((p,i)=>{const l=prep(p);an(p,[{strokeDashoffset:l},{strokeDashoffset:0}],1500,{delay:i*400,e:'cubic-bezier(.65,0,.35,1)'});});
+  wave(b);
+  if(o.strong&&!RM)m.animate([{transform:'scale(1)'},{transform:'scale(1.035)'},{transform:'scale(1)'}],{duration:2400,iterations:Infinity,easing:'ease-in-out'});
+  await sleep(o.hold||2300);
+  await an(m,[{opacity:1,filter:'blur(0)',transform:'scale(1)'},{opacity:0,filter:'blur(12px)',transform:'scale(.97) translateY(-14px)'}],1500,{e:'ease-in'});
 }
 async function run(){
   an($('#bt'),[{transform:'translateY(-100%)'},{transform:'none'}],2400);an($('#bb'),[{transform:'translateY(100%)'},{transform:'none'}],2400);
@@ -481,10 +493,6 @@ async function run(){
   await an($('#gate'),[{opacity:1},{opacity:0}],1600,{e:'ease-in-out'});$('#gate').remove();
   await sleep(600);
   const intro=$('#intro');await show(intro);
-  await introLine('Hey Lamu…\njust hear me out once, naa.',1300);
-  await introLine('tmi amar senior,\nbut ami tmk propose korte chai.',1500);
-  await introLine('ekta choto kotha —\njust ekbar hoye jao na amar.',1700);
-  await introLine('naa bolleo naa bolte dibo na,\nami to eto cute bhabe bolchi.',1800);
   $('#it').style.display='none';
   const hs=$('#hs');hs.style.display='block';
   an(hs,[{opacity:0,transform:'scale(.82)'},{opacity:1,transform:'scale(1)'}],1800);
@@ -492,70 +500,40 @@ async function run(){
   drawPath($('#r1'),3000);
   await drawPath($('#hp'),3200);
   an($('#hp'),[{fill:'rgba(168,203,230,0)'},{fill:'rgba(168,203,230,.6)'}],1500);
-  const cap=$('#cap');const cb=build(cap,'for lamu',{cs:110});await reveal(cb,1200);
-  await sleep(900);
+  /* introduce her */
+  const cap=$('#cap');
+  Object.assign(cap.style,{textTransform:'none',fontSize:'clamp(2.2rem,10vw,3.8rem)',letterSpacing:'.22em',fontStyle:'italic',marginTop:'22px'});
+  const cb=build(cap,'Lamu',{cs:160});await reveal(cb,1600);
+  await sleep(1800);
   an(cap,[{opacity:1},{opacity:0}],1200,{e:'ease-in'});
   await an(hs,[{opacity:1,transform:'scale(1)',filter:'blur(0)'},{opacity:0,transform:'scale(1.8)',filter:'blur(12px)'}],1700,{e:'ease-in'});
   await hide(intro);await sleep(400);
 
-  /* main message — the emotional beat */
-  const ms=$('#msgS'),m=$('#msg');ms.classList.add('on');
-  const b=build(m,MSG,{em:['Lamu','khoti'],cs:62,gap:170,lb:650});
-  $('#push').animate([{transform:'scale(1)'},{transform:'scale(1.06)'}],{duration:T(16000),easing:'ease-in-out',fill:'both'});
+  /* the story */
+  const ms=$('#msgS');ms.classList.add('on');
+  $('#push').animate([{transform:'scale(1)'},{transform:'scale(1.06)'}],{duration:T(60000),easing:'ease-in-out',fill:'both'});
   an($('#glow'),[{opacity:.8},{opacity:1},{opacity:.7}],4500);
-  m.animate([{filter:'drop-shadow(0 0 30px rgba(168,203,230,1))'},{filter:'drop-shadow(0 0 8px rgba(168,203,230,.2))'}],{duration:T(b.total+3200),easing:'ease-out',fill:'both'});
-  await reveal(b,1400);
-  b.ems.forEach((p,i)=>{const l=prep(p);an(p,[{strokeDashoffset:l},{strokeDashoffset:0}],1500,{delay:i*500,e:'cubic-bezier(.65,0,.35,1)'});});
-  an(m,[{transform:'scale(1.045)',letterSpacing:'.03em'},{transform:'scale(1)',letterSpacing:'0em'}],2800);
-  wave(b);
-  await sleep(3800);
-  await an(m,[{opacity:1,filter:'blur(0)',transform:'scale(1)'},{opacity:0,filter:'blur(12px)',transform:'scale(.96) translateY(-18px)'}],1700,{e:'ease-in'});
-  ms.classList.remove('on');await sleep(700);
-
-  /* second beat: then asbe ami ki kotikharok na ....... */
-  ms.classList.add('on');
-  const b15=build(m,'then asbe ami\nki kotikharok na .......',{em:['kotikharok'],cs:58,gap:150,lb:560});
-  m.animate([{filter:'drop-shadow(0 0 30px rgba(168,203,230,1))'},{filter:'drop-shadow(0 0 8px rgba(168,203,230,.2))'}],{duration:T(b15.total+3200),easing:'ease-out',fill:'both'});
-  await reveal(b15,1400);
-  b15.ems.forEach((p,i)=>{const l=prep(p);an(p,[{strokeDashoffset:l},{strokeDashoffset:0}],1500,{delay:i*400,e:'cubic-bezier(.65,0,.35,1)'});});
-  wave(b15);
-  await sleep(3600);
-  await an(m,[{opacity:1,filter:'blur(0)',transform:'scale(1)'},{opacity:0,filter:'blur(12px)',transform:'scale(.96) translateY(-18px)'}],1700,{e:'ease-in'});
-  ms.classList.remove('on');await sleep(700);
-
-  /* final, emotionally stronger line */
-  ms.classList.add('on');
-  m.style.fontSize='clamp(1.9rem,8vw,3.9rem)';
-  const bf=build(m,'hoye jao na\namar hoyeeeeeeeeeee.',{em:['hoyeeeeeeeeeee'],cs:60,gap:160,lb:560});
-  const sp2=setInterval(()=>sparkle(W/2,H*.5,4,Math.min(W*.4,220)),420);
-  m.animate([{filter:'drop-shadow(0 0 44px rgba(168,203,230,1))'},{filter:'drop-shadow(0 0 10px rgba(168,203,230,.25))'}],{duration:T(bf.total+4200),easing:'ease-out',fill:'both'});
-  await reveal(bf,1500,'translateY(116%) scale(.86) rotate(5deg)');
-  bf.ems.forEach((p,i)=>{const l=prep(p);an(p,[{strokeDashoffset:l},{strokeDashoffset:0}],1500,{delay:i*400,e:'cubic-bezier(.65,0,.35,1)'});});
-  wave(bf);
-  sparkle(W/2,H*.5,16,Math.min(W*.42,240));
-  await sleep(4200);clearInterval(sp2);
-  await an(m,[{opacity:1,filter:'blur(0)',transform:'scale(1)'},{opacity:0,filter:'blur(12px)',transform:'scale(.96) translateY(-18px)'}],1700,{e:'ease-in'});
-  ms.classList.remove('on');m.style.fontSize='';await sleep(700);
-
-  /* special: "you will" */
-  const ws=$('#wishS'),w1=$('#w1'),w2=$('#w2'),wl=$('#wlp');await show(ws);
-  wl.style.opacity=0;shoot();an($('#glow'),[{opacity:.7},{opacity:1},{opacity:.7}],4500);
-  await sleep(1100);
-  w1.style.display='none';$('#wl').style.display='none';
-  const sp=setInterval(()=>sparkle(W/2,H*.42,3,Math.min(W*.38,200)),450);
-  w2.style.fontSize='clamp(2.4rem,10vw,4.6rem)';w2.style.marginTop='0';
-  const b2=build(w2,'you will',{cs:90,gap:220,lb:560});
-  w2.animate([{filter:'drop-shadow(0 0 36px rgba(168,203,230,1))'},{filter:'drop-shadow(0 0 8px rgba(168,203,230,.25))'}],{duration:T(3500),easing:'ease-out',fill:'both'});
-  await reveal(b2,1400);wave(b2);
-  sparkle(W/2,H*.5,12,Math.min(W*.4,220));
-  await sleep(3800);clearInterval(sp);
-  await an(ws,[{opacity:1,filter:'blur(0)'},{opacity:0,filter:'blur(12px)'}],1500,{e:'ease-in'});
-  ws.classList.remove('on');clearAn(ws);await sleep(500);
+  await storyLine('Lamu, tmi amar senior.\nSeta ami bhalo kore jani…',{em:['senior']});
+  await storyLine('tobuo ami tmk propose korbo,\nkaron ami ektu jiddi.',{em:['propose']});
+  await storyLine('Tmi hoyto bolbe, “ei chele pagol!”\nHyan, ami pagol. Sudhu tmar jonno.',{em:['pagol.']});
+  await storyLine('Ami hoyto ektu desperate,\nektu beshi-i pagla…\nkintu ami sotti-i tmk chai.',{em:['chai.'],hold:2600});
+  await sleep(500);
+  await storyLine('Accah Lamu, tmi amar hole ki emn khoti hobe?',{hold:1800});
+  await sleep(800);
+  await storyLine('then asbe ami ki kotikharok na .......',{hold:1900});
+  await sleep(1000);
+  /* the final plea */
+  an($('#glow'),[{opacity:.7},{opacity:1}],3500);
+  shoot();setTimeout(rain,1400);setTimeout(rain,4200);
+  const sp=setInterval(()=>sparkle(W/2,H*.45,4,Math.min(W*.4,220)),380);
+  await storyLine('hoye jao na\namar hoyeeeeeeeeeee.',{fs:'clamp(2.2rem,9.4vw,4.3rem)',cs:90,gap:260,dur:2000,em:['amar'],hold:4200,strong:true});
+  clearInterval(sp);
+  ms.classList.remove('on');await sleep(600);
 
   /* the question */
   ambient=true;an($('#tint'),[{opacity:0},{opacity:.55}],4000);
   const as=$('#askS'),a=$('#ask');await show(as);
-  const q=build(a,'so… lamuuuu, hoye jao na?',{cs:78,gap:200});
+  const q=build(a,'you will',{cs:90,gap:220});
   a.animate([{filter:'drop-shadow(0 0 40px rgba(168,203,230,1))'},{filter:'drop-shadow(0 0 10px rgba(168,203,230,.2))'}],{duration:T(4200),easing:'ease-out',fill:'both'});
   await reveal(q,1500,'translateY(114%) scale(.88) rotate(6deg)');
   wave(q);await sleep(300);
@@ -668,14 +646,7 @@ async function ringScene(){
 
 /* ---------- Interactions ---------- */
 let noCount=0;
-const NOPE=[
-  'Hehe… are you sure, Lamu? 🥺',
-  'Lamu, abar bhebo… amar mon ta sunche 💗',
-  'Nope button ta lajja korche. Oi pasher ta cute 👀',
-  'Error: "No" pawa jacche na. Onno button ta try koro 🙈',
-  'Thik ache… ami wait korbo. Forever. 😌',
-  'Ekhono ekhane achi, ekhono asha niye ❤️'
-];
+const NOPE=['Hehe… are you sure? 🥺','Lamuuu, think again. My heart is listening 💗','That button looks shy. The other one looks very cute 👀','Error: “No” could not be found. Try the other one 🙈','Okay okay, I’ll wait. Forever. 😌','Still here, still hoping ❤️'];
 const hint=$('#hint'),yes=$('#yes'),no=$('#no');
 no.onclick=()=>{
   const msg=NOPE[noCount%NOPE.length];noCount++;
@@ -696,7 +667,7 @@ yes.onclick=async()=>{
   setTimeout(rain,600);setTimeout(rain,2600);
   await show(ys);
   const hp=$('#hp2');
-  const t=$('#ys'),b=build(t,'Hehe! ami jantam, lamuuuu! ❤️',{cs:50,gap:180});
+  const t=$('#ys'),b=build(t,'Hehe! I knew it, Lamu! ❤️',{cs:50,gap:180});
   await drawPath(hp,1800);
   an(hp,[{fill:'rgba(168,203,230,0)'},{fill:'rgba(111,163,203,.75)'}],1200);
   $('#hs2').animate([{transform:'scale(1)'},{transform:'scale(1.14)'},{transform:'scale(1)'},{transform:'scale(1.08)'},{transform:'scale(1)'}],{duration:T(1500),iterations:Infinity,easing:'ease-in-out'});
